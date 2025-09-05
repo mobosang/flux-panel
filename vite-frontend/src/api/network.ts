@@ -30,6 +30,7 @@ export const reinitializeBaseURL = () => {
   } else {
     baseURL = import.meta.env.VITE_API_BASE ? `${import.meta.env.VITE_API_BASE}/api/v1/` : '/api/v1/';
     axios.defaults.baseURL = baseURL;
+    console.log('API Base URL initialized:', baseURL);
   }
 };
 
