@@ -26,7 +26,7 @@ services:
       retries: 10
 
   backend:
-    image: jjjjmo/springboot-backend:latest
+    image: jjjjmo/springboot-backend:${ARCH_TAG:-latest}
     container_name: springboot-backend
     restart: unless-stopped
     environment:
@@ -54,7 +54,7 @@ services:
       start_period: 90s
 
   frontend:
-    image: jjjjmo/vite-frontend:latest
+    image: jjjjmo/vite-frontend:${ARCH_TAG:-latest}
     container_name: vite-frontend
     restart: unless-stopped
     ports:

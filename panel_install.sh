@@ -51,6 +51,29 @@ check_docker() {
   echo "检测到 Docker 命令：$DOCKER_CMD"
 }
 
+# 检测系统架构并设置对应的Docker镜像标签
+detect_architecture() {
+  echo "🔍 检测系统架构..."
+  
+  ARCH=$(uname -m)
+  case $ARCH in
+    x86_64|amd64)
+      ARCH_TAG="latest-amd64"
+      echo "✅ 检测到 AMD64/x86_64 架构，将使用 AMD64 镜像"
+      ;;
+    aarch64|arm64)
+      ARCH_TAG="latest"
+      echo "✅ 检测到 ARM64/aarch64 架构，将使用 ARM64 镜像"
+      ;;
+    *)
+      echo "⚠️ 未识别的架构: $ARCH，默认使用 AMD64 镜像"
+      ARCH_TAG="latest-amd64"
+      ;;
+  esac
+  
+  export ARCH_TAG
+}
+
 # 检测系统是否支持 IPv6
 check_ipv6_support() {
   echo "🔍 检测 IPv6 支持..."
@@ -194,6 +217,7 @@ get_config_params() {
 install_panel() {
   echo "🚀 开始安装面板..."
   check_docker
+  detect_architecture
   get_config_params
 
   echo "🔽 下载必要文件..."
@@ -223,6 +247,7 @@ DB_PASSWORD=$DB_PASSWORD
 JWT_SECRET=$JWT_SECRET
 FRONTEND_PORT=$FRONTEND_PORT
 BACKEND_PORT=$BACKEND_PORT
+ARCH_TAG=$ARCH_TAG
 EOF
 
   echo "🚀 启动 docker 服务..."
@@ -242,6 +267,7 @@ EOF
 update_panel() {
   echo "🔄 开始更新面板..."
   check_docker
+  detect_architecture
 
   echo "🔽 下载最新配置文件..."
   DOCKER_COMPOSE_URL=$(get_docker_compose_url)
@@ -260,6 +286,18 @@ update_panel() {
 
   echo "⬇️ 拉取最新镜像..."
   $DOCKER_CMD pull
+
+  # 更新.env文件中的架构标签
+  if [[ -f ".env" ]]; then
+    echo "🔄 更新.env文件中的架构标签..."
+    if grep -q "^ARCH_TAG=" .env; then
+      # 如果已存在ARCH_TAG，则更新它
+      sed -i.bak "s/^ARCH_TAG=.*/ARCH_TAG=$ARCH_TAG/" .env && rm -f .env.bak
+    else
+      # 如果不存在ARCH_TAG，则添加它
+      echo "ARCH_TAG=$ARCH_TAG" >> .env
+    fi
+  fi
 
   echo "🚀 启动更新后的服务..."
   $DOCKER_CMD up -d
