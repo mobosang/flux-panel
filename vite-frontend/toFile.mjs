@@ -9,7 +9,8 @@ htmlArr.forEach(str => {
     str = str.replace(/\s?nomodule\s?/g,' ');
     str = str.replace(/\s?crossorigin\s?/g,' ');
     str = str.replace(/data-src/g,'src');
-    if(!/type="module"/i.test(str)) resultText += str;
+    // 不再过滤 type="module" 的标签，只是移除 crossorigin 和 nomodule 属性
+    resultText += str;
 });
 fs.writeFileSync(distPath,resultText,'utf8');
 console.timeEnd('转换耗时');

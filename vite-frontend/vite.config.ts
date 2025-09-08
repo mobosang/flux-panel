@@ -5,7 +5,11 @@ import legacy from '@vitejs/plugin-legacy'
 
 export default defineConfig({
   plugins: [
-    react()
+    react(),
+    legacy({
+      targets: ['defaults', 'not IE 11'],
+      renderLegacyChunks: false
+    })
   ],
   base: './',    
   resolve: {
@@ -21,7 +25,6 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
     minify: false,  
-    target: 'esnext',
     rollupOptions: {
       treeshake: false,
     }
