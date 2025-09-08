@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && node toFile.mjs",
+    "build": "tsc && vite build --no-minify && node toFile.mjs",
     "lint": "eslint --fix",
     "preview": "vite preview"
   },
