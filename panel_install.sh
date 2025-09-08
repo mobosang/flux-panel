@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# 解决 macOS 下 tr 可能出现的非法字节序列问题
+# 解决  macOS 下 tr 可能出现的非法字节序列问题
 export LANG=en_US.UTF-8
 export LC_ALL=C
 
