@@ -24,6 +24,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -721,48 +723,57 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     /**
-     * 获取用户最近24小时的流量统计数据，没有数据的时间点补0
+     * 获取用户最近24小时的流量统计数据（30分钟间隔），没有数据的时间点补0
      * 
      * @param userId 用户ID
-     * @return 最近24小时流量统计列表
+     * @return 最近24小时流量统计列表（48个数据点）
      */
     private List<StatisticsFlow> getLast24HoursFlowStatistics(Long userId) {
-        // 按ID倒序查最近24条记录（ID越大越新，时间就是23:00, 22:00, 21:00...这样倒序）
+        // 按ID倒序查最近48条记录（30分钟间隔，24小时需要48个数据点）
         List<StatisticsFlow> recentFlows = statisticsFlowService.list(
                 new QueryWrapper<StatisticsFlow>()
                         .eq("user_id", userId)
                         .orderByDesc("id")
-                        .last("LIMIT 24")
+                        .last("LIMIT 48")
         );
 
         List<StatisticsFlow> result = new ArrayList<>(recentFlows);
 
-        // 如果查出来的记录不足24条，需要补0和对应的时间
-        if (result.size() < 24) {
-            // 获取最早记录的时间，继续往前推
-            int startHour = getCurrentHour();
+        // 如果查出来的记录不足48条，需要补0和对应的时间
+        if (result.size() < 48) {
+            // 获取当前时间并对齐到30分钟边界
+            LocalDateTime now = LocalDateTime.now().withSecond(0).withNano(0);
+            int minute = now.getMinute() >= 30 ? 30 : 0;
+            LocalDateTime alignedTime = now.withMinute(minute);
+            
+            String lastTimePoint = alignedTime.format(DateTimeFormatter.ofPattern("HH:mm"));
             if (!result.isEmpty()) {
                 // 从最后一条记录的时间继续往前推
-                String lastTime = result.get(result.size() - 1).getTime();
-                startHour = parseHour(lastTime) - 1;
+                lastTimePoint = result.get(result.size() - 1).getTime();
+            }
+            
+            // 解析最后一个时间点
+            LocalDateTime currentTime = parseTimeToLocalDateTime(lastTimePoint);
+            if (currentTime == null) {
+                currentTime = alignedTime;
             }
 
-            // 补0到24条
-            while (result.size() < 24) {
-                if (startHour < 0) startHour = 23; // 跨天处理
+            // 补0到48条
+            while (result.size() < 48) {
+                // 往前推30分钟
+                currentTime = currentTime.minusMinutes(30);
+                String timeString = currentTime.format(DateTimeFormatter.ofPattern("HH:mm"));
 
                 StatisticsFlow emptyFlow = new StatisticsFlow();
                 emptyFlow.setUserId(userId);
                 emptyFlow.setFlow(0L);
                 emptyFlow.setTotalFlow(0L);
-                emptyFlow.setTime(String.format("%02d:00", startHour));
+                emptyFlow.setTime(timeString);
                 result.add(emptyFlow);
-
-                startHour--;
             }
         }
 
-        log.info("用户 {} 获取到 {} 条实际记录，补齐为 {} 条24小时记录", userId, recentFlows.size(), result.size());
+        log.info("用户 {} 获取到 {} 条实际记录，补齐为 {} 条24小时记录（30分钟间隔）", userId, recentFlows.size(), result.size());
         return result;
 
     }
@@ -786,6 +797,26 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             // 解析失败，返回当前小时
         }
         return getCurrentHour();
+    }
+
+    /**
+     * 解析时间字符串为LocalDateTime对象
+     */
+    private LocalDateTime parseTimeToLocalDateTime(String timeStr) {
+        try {
+            if (timeStr != null && timeStr.contains(":")) {
+                String[] parts = timeStr.split(":");
+                if (parts.length == 2) {
+                    int hour = Integer.parseInt(parts[0]);
+                    int minute = Integer.parseInt(parts[1]);
+                    LocalDateTime now = LocalDateTime.now();
+                    return now.withHour(hour).withMinute(minute).withSecond(0).withNano(0);
+                }
+            }
+        } catch (Exception e) {
+            // 解析失败，返回null
+        }
+        return null;
     }
 
 

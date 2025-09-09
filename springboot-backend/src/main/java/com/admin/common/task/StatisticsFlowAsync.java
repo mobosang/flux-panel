@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -30,10 +29,13 @@ public class StatisticsFlowAsync {
     @Resource
     StatisticsFlowService statisticsFlowService;
 
-    @Scheduled(cron = "0 0 * * * ?")
+    @Scheduled(cron = "0 0,30 * * * ?")
     public void statistics_flow() {
-        LocalDateTime currentHour = LocalDateTime.now().withMinute(0).withSecond(0).withNano(0);
-        String hourString = currentHour.format(DateTimeFormatter.ofPattern("HH:mm"));
+        LocalDateTime currentTime = LocalDateTime.now().withSecond(0).withNano(0);
+        // 将分钟数调整为0或30
+        int minute = currentTime.getMinute() >= 30 ? 30 : 0;
+        LocalDateTime alignedTime = currentTime.withMinute(minute);
+        String timeString = alignedTime.format(DateTimeFormatter.ofPattern("HH:mm"));
         long time = new Date().getTime();
 
         // 删除48小时前的数据
@@ -78,7 +80,7 @@ public class StatisticsFlowAsync {
             statisticsFlow.setUserId(user.getId());
             statisticsFlow.setFlow(incrementFlow);        
             statisticsFlow.setTotalFlow(currentTotalFlow); 
-            statisticsFlow.setTime(hourString);
+            statisticsFlow.setTime(timeString);
             statisticsFlow.setCreatedTime(time);
 
             statisticsFlowList.add(statisticsFlow);

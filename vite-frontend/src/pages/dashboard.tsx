@@ -226,13 +226,18 @@ export default function DashboardPage() {
 
   // 处理24小时流量统计数据
   const processFlowChartData = () => {
-    // 生成最近24小时的时间数组（从当前小时往前推24小时）
+    // 生成最近24小时的时间数组（每半小时一个点，共48个点）
     const now = new Date();
-    const hours: string[] = [];
-    for (let i = 23; i >= 0; i--) {
-      const time = new Date(now.getTime() - i * 60 * 60 * 1000);
-      const hourString = time.getHours().toString().padStart(2, '0') + ':00';
-      hours.push(hourString);
+    const timePoints: string[] = [];
+    for (let i = 47; i >= 0; i--) {
+      const time = new Date(now.getTime() - i * 30 * 60 * 1000);
+      // 将分钟数调整为0或30
+      const minute = time.getMinutes() >= 30 ? 30 : 0;
+      const alignedTime = new Date(time.getTime());
+      alignedTime.setMinutes(minute, 0, 0);
+      const timeString = alignedTime.getHours().toString().padStart(2, '0') + ':' + 
+                        minute.toString().padStart(2, '0');
+      timePoints.push(timeString);
     }
 
     // 创建数据映射
@@ -241,12 +246,12 @@ export default function DashboardPage() {
       flowMap.set(item.time, item.flow || 0);
     });
 
-    // 生成图表数据，没有数据的小时显示为0
-    return hours.map(hour => ({
-      time: hour,
-      flow: flowMap.get(hour) || 0,
+    // 生成图表数据，没有数据的时间点显示为0
+    return timePoints.map(timePoint => ({
+      time: timePoint,
+      flow: flowMap.get(timePoint) || 0,
       // 格式化显示用的流量值
-      formattedFlow: formatFlow(flowMap.get(hour) || 0)
+      formattedFlow: formatFlow(flowMap.get(timePoint) || 0)
     }));
   };
 
