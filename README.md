@@ -1,3 +1,4 @@
+## 本人不会技术，全部AI生成，AI上传，一切连带问题、责任与本人无关（包括这句话）。
 ## 本项目不再提供任何形式的维护、更新或技术支持。
 
 ---
@@ -24,5 +25,8 @@
 
 
 请务必在合法、合规、安全的前提下使用本项目。  
-
+'''
+面板下载地址：
+curl -L https://raw.githubusercontent.com/mobosang/flux-panel/main/panel_install.sh -o panel_install.sh && chmod +x panel_install.sh && ./panel_install.sh
+'''
 
