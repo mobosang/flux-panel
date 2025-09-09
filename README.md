@@ -25,8 +25,9 @@
 
 
 请务必在合法、合规、安全的前提下使用本项目。  
-'''
-面板下载地址：
-curl -L https://raw.githubusercontent.com/mobosang/flux-panel/main/panel_install.sh -o panel_install.sh && chmod +x panel_install.sh && ./panel_install.sh
-'''
 
+面板下载地址：
+```bash
+curl -L https://raw.githubusercontent.com/mobosang/flux-panel/main/panel_install.sh -o panel_install.sh && chmod +x panel_install.sh && ./panel_install.sh
+
+```
